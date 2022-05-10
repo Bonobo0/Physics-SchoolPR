@@ -14,6 +14,13 @@ export default function Index() {
   const [someStateValue, setSomeStateValue] = useState(false)
   const [resetStateValue, setResetStateValue] = useState(false)
 
+  const [pusherStateValue, setPusherStateValue] = useState(false)
+  const [ballSpeedStateValue, setBallSpeedStateValue] = useState(false)
+  const [pusherSpeedStateValue, setPusherSpeedStateValue] = useState(false)
+  const [ballMassStateValue, setBallMassStateValue] = useState(10)
+  const [pusherMassStateValue, setPusherMassStateValue] = useState(1)
+  const [pusherForceStateValue, setPusherForceStateValue] = useState(0.1)
+
   const handleResize = () => {
     setContraints(boxRef.current.getBoundingClientRect())
   }
@@ -24,6 +31,10 @@ export default function Index() {
 
   const handleClick = () => {
     setSomeStateValue(!someStateValue)
+  }
+
+  const handlePusherClick = () => {
+    setPusherStateValue(!pusherStateValue)
   }
 
   useEffect(() => {
@@ -52,34 +63,23 @@ export default function Index() {
       },
     })
 
-    const pusher0 = Bodies.polygon(0, 530, 100, 25, {
+
+    const pusher1 = Bodies.rectangle(0, 535, 175, 15, {
       isStatic: true,
       render: {
         fillStyle: 'red',
       },
-    })
-    const pusher1 = Bodies.rectangle(40, 530, 175, 15, {
-      isStatic: true,
-      render: {
-        fillStyle: 'red',
-      },
+      mass: pusherMassStateValue,
     })
 
-    World.add(engine.world, [floor, pusher0, pusher1])
-
+    World.add(engine.world, [floor, pusher1])
+    engine.world.gravity.y = 0;
     Runner.run(engine)
     Render.run(render)
-
     setContraints(boxRef.current.getBoundingClientRect())
     setScene(render)
 
     window.addEventListener('resize', handleResize)
-  }, [])
-
-  useEffect(() => {
-    return () => {
-      window.removeEventListener('resize', handleResize)
-    }
   }, [])
 
   useEffect(() => {
@@ -114,11 +114,10 @@ export default function Index() {
   useEffect(() => {
     // Add a new "ball" everytime `someStateValue` changes
     if (scene) {
-      let { width } = constraints
-      let randomX = Math.floor(Math.random() * -width) + width + 290
+      let randomX = 220
       Matter.World.add(
         scene.engine.world,
-        Matter.Bodies.circle(randomX, 555, PARTICLE_SIZE),
+        Matter.Bodies.circle(randomX, 550, PARTICLE_SIZE, { mass: ballMassStateValue, friction: 0, frictionAir: 0, restitution: 0 }),
       )
     }
   }, [someStateValue])
@@ -126,10 +125,21 @@ export default function Index() {
   useEffect(() => {
     // Remove ALL "ball" everytime `resetStateValue` changes
     if (scene) {
-      console.log('detected')
+      let pusher = scene.engine.world.bodies[1];
+      Matter.Body.setPosition(pusher, {
+        x: 100,
+        y: 535,
+      }
+      )
+      Matter.Body.setVelocity(pusher, {
+        x: 0,
+        y: 0,
+      }
+      )
       for (let i = scene.engine.world.bodies.length - 1; i >= 0; i--) {
         scene.engine.world.bodies.forEach((body) => {
           if (body.label === 'Circle Body') {
+            console.log(body.mass)
             Matter.World.remove(scene.engine.world, body)
           }
         }
@@ -137,6 +147,52 @@ export default function Index() {
       }
     }
   }, [resetStateValue])
+
+  useEffect(() => {
+    // Run pusher everytime `pusherStateValue` changes
+    if (scene) {
+      let pusher = scene.engine.world.bodies[1];
+      if (pusherStateValue) {
+        pusher.isStatic = false;
+        Matter.Body.applyForce(pusher, { x: pusher.position.x, y: pusher.position.y }, {
+          x: pusherForceStateValue * pusher.mass,
+          y: 0,
+        })
+      } else {
+        pusher.isStatic = true;
+        Matter.Body.setPosition(pusher, {
+          x: 100,
+          y: 535,
+        }
+        )
+      }
+    }
+  }, [pusherStateValue])
+
+  useEffect(() => {
+    // Get object' speed 
+    if (scene) {
+      setInterval(
+        () => {
+          for (let i = scene.engine.world.bodies.length - 1; i >= 0; i--) {
+            scene.engine.world.bodies.forEach((body) => {
+              if (body.label === 'Circle Body') {
+                setBallSpeedStateValue(body.velocity.x)
+                setBallMassStateValue(body.mass)
+              }
+              else if (body.label === 'Rectangle Body') {
+                setPusherSpeedStateValue(body.velocity.x)
+                setPusherMassStateValue(body.mass)
+              }
+            }
+            )
+          }
+        }
+        , 1)
+    }
+  }, [scene])
+
+
   return (
     <div
       style={{
@@ -146,15 +202,6 @@ export default function Index() {
       }}
     >
       <div style={{ textAlign: 'center' }}>물리 (1920x1080 해상도 기준, 최대화 된 화면에만 최적화 되어있습니다. 그 외의 환경에선 작동을 보장하지 않습니다.)</div>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr auto',
-          rowGap: '16px',
-          marginBottom: '32px',
-        }}
-      >
-      </div>
 
       <div
         ref={boxRef}
@@ -162,8 +209,8 @@ export default function Index() {
           position: 'absolute',
           top: 0,
           left: 0,
-          width: '100%',
-          height: '100%',
+          width: '550vh',
+          height: '59vh',
           pointerEvents: 'none',
         }}
       >
@@ -175,10 +222,10 @@ export default function Index() {
           display: 'block',
           textAlign: 'center',
           marginBottom: '16px',
-          width: '10%',
-          top: '120px',
-          marginLeft: "45%",
-          marginTop: "25%",
+          width: '10vh',
+          top: '10vh',
+          marginLeft: "100vh",
+          marginTop: "50vh",
           position: 'relative',
           zIndex: '1'
         }}
@@ -189,15 +236,37 @@ export default function Index() {
       <button className="btn-rst" onClick={() => resetWorld()}>
         초기화
       </button>
+      <br />
+      <button className="btn-rst" onClick={() => handlePusherClick()}>
+        push
+      </button>
+      <br />
+      <br />
+      <br />
+      <div>
+        Dashboard
+        <br />
+        공 속도: {ballSpeedStateValue}
+        <br />
+        질량: {ballMassStateValue}
+        <br />
+        밀대 속도: {pusherSpeedStateValue}
+        <br />
+        밀대가 미는 힘: {pusherForceStateValue * pusherMassStateValue}
+        <br />
+        질량: {pusherMassStateValue}
+        <br />
+        공에는 마찰력이 작용하지 않음. 중력이 적용되지 않음.
+      </div>
       <style jsx>{`
         .btn-rst {
           cursor: pointer;
           display: block;
           textAlign: center;
-          margin-top: -1%;
+          margin-top: -2vh;
           position: relative;
           z-index: 1;
-          top: 90px;
+          top: 7vh;
         }
       `}</style>
     </div>
