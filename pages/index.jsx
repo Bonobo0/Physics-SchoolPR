@@ -66,6 +66,10 @@ export default function Index() {
 
     const pusher1 = Bodies.rectangle(0, 535, 175, 15, {
       isStatic: true,
+      friction: 0,
+      frictionAir: 0,
+      restitution: 0,
+      
       render: {
         fillStyle: 'red',
       },
