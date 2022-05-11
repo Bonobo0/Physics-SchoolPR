@@ -261,6 +261,8 @@ export default function Index() {
         질량: {pusherMassStateValue}
         <br />
         공에는 마찰력이 작용하지 않음. 중력이 적용되지 않음.
+        <br />
+        밀대에는 0.1의 마찰력이 작용함.
       </div>
       <style jsx>{`
         .btn-rst {
