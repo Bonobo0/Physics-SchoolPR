@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import Matter from 'matter-js'
+import Button from '@mui/material/Button';
 
 const STATIC_DENSITY = 9
 const PARTICLE_SIZE = 20
@@ -20,10 +21,6 @@ export default function Index() {
   const [ballMassStateValue, setBallMassStateValue] = useState(10)
   const [pusherMassStateValue, setPusherMassStateValue] = useState(1)
   const [pusherForceStateValue, setPusherForceStateValue] = useState(0.1)
-
-  const handleResize = () => {
-    setContraints(boxRef.current.getBoundingClientRect())
-  }
 
   const resetWorld = () => {
     setResetStateValue(!resetStateValue)
@@ -55,6 +52,20 @@ export default function Index() {
         wireframes: false,
       },
     })
+    let pusherPostiton = { x: 0, y: 0 }
+    let windowWidth = window.outerWidth;
+    if (windowWidth > 600) {
+      pusherPostiton = {
+        x: 100,
+        y: 535,
+      }
+    }
+    else {
+      pusherPostiton = {
+        x: 100,
+        y: 335,
+      }
+    };
 
     const floor = Bodies.rectangle(0, 0, 0, STATIC_DENSITY, {
       isStatic: true,
@@ -69,7 +80,7 @@ export default function Index() {
       friction: 0.1,
       frictionAir: 0.1,
       restitution: 0.1,
-      
+
       render: {
         fillStyle: 'red',
       },
@@ -82,8 +93,14 @@ export default function Index() {
     Render.run(render)
     setContraints(boxRef.current.getBoundingClientRect())
     setScene(render)
-
-    window.addEventListener('resize', handleResize)
+    window.addEventListener('resize', () => {
+      render.bounds.max.x = window.innerWidth;
+      render.bounds.max.y = window.innerHeight;
+      render.options.width = window.innerWidth;
+      render.options.height = window.innerHeight;
+      render.canvas.width = window.innerWidth;
+      render.canvas.height = window.innerHeight;
+    });
   }, [])
 
   useEffect(() => {
@@ -97,6 +114,7 @@ export default function Index() {
       scene.options.height = height
       scene.canvas.width = width
       scene.canvas.height = 560
+
 
       // Dynamically update floor
       const floor = scene.engine.world.bodies[0]
@@ -118,22 +136,40 @@ export default function Index() {
   useEffect(() => {
     // Add a new "ball" everytime `someStateValue` changes
     if (scene) {
-      let randomX = 220
+      let circlePostiton = { x: 220, y: 0 }
+      let windowWidth = window.outerWidth;
+      if (windowWidth > 600) {
+        circlePostiton.y = 550
+      }
+      else {
+        circlePostiton.y = 350
+      };
       Matter.World.add(
         scene.engine.world,
-        Matter.Bodies.circle(randomX, 550, PARTICLE_SIZE, { mass: ballMassStateValue, friction: 0, frictionAir: 0, restitution: 0 }),
+        Matter.Bodies.circle(circlePostiton.x, circlePostiton.y, PARTICLE_SIZE, { mass: ballMassStateValue, friction: 0, frictionAir: 0, restitution: 0 }),
       )
     }
   }, [someStateValue])
 
   useEffect(() => {
     // Remove ALL "ball" everytime `resetStateValue` changes
-    if (scene) {
-      let pusher = scene.engine.world.bodies[1];
-      Matter.Body.setPosition(pusher, {
+    let pusherPostiton = {}
+    let windowWidth = window.outerWidth
+    if (windowWidth > 600) {
+      pusherPostiton = {
         x: 100,
         y: 535,
       }
+    }
+    else {
+      pusherPostiton = {
+        x: 100,
+        y: 335,
+      }
+    }
+    if (scene) {
+      let pusher = scene.engine.world.bodies[1];
+      Matter.Body.setPosition(pusher, pusherPostiton
       )
       Matter.Body.setVelocity(pusher, {
         x: 0,
@@ -154,6 +190,21 @@ export default function Index() {
 
   useEffect(() => {
     // Run pusher everytime `pusherStateValue` changes
+    let windowWidth = window.outerWidth
+    let pusherPostiton = {}
+    if (windowWidth > 600) {
+      pusherPostiton = {
+        x: 100,
+        y: 535,
+      }
+    }
+    else {
+      pusherPostiton = {
+        x: 100,
+        y: 320,
+      }
+    }
+
     if (scene) {
       let pusher = scene.engine.world.bodies[1];
       if (pusherStateValue) {
@@ -164,10 +215,7 @@ export default function Index() {
         })
       } else {
         pusher.isStatic = true;
-        Matter.Body.setPosition(pusher, {
-          x: 100,
-          y: 535,
-        }
+        Matter.Body.setPosition(pusher, pusherPostiton
         )
       }
     }
@@ -181,18 +229,21 @@ export default function Index() {
           for (let i = scene.engine.world.bodies.length - 1; i >= 0; i--) {
             scene.engine.world.bodies.forEach((body) => {
               if (body.label === 'Circle Body') {
-                setBallSpeedStateValue(body.velocity.x)
-                setBallMassStateValue(body.mass)
+                setBallSpeedStateValue(body.velocity.x);
+                setBallMassStateValue(body.mass);
               }
               else if (body.label === 'Rectangle Body') {
-                setPusherSpeedStateValue(body.velocity.x)
-                setPusherMassStateValue(body.mass)
-              }
+                setPusherSpeedStateValue(body.velocity.x);
+                setPusherMassStateValue(body.mass);
+                if (body.velocity.x < 0.0000001) {
+                  setPusherSpeedStateValue(0);
+                }
+              };
             }
             )
-          }
+          };
         }
-        , 1)
+        , 0.001)
     }
   }, [scene])
 
@@ -205,45 +256,35 @@ export default function Index() {
         padding: '8px',
       }}
     >
-      <div style={{ textAlign: 'center' }}>물리 (1920x1080 해상도 기준, 최대화 된 화면에만 최적화 되어있습니다. 그 외의 환경에선 작동을 보장하지 않습니다.)</div>
+      <div style={{ textAlign: 'center' }}>물리 시뮬레이터</div>
 
       <div
+        className="canvas"
         ref={boxRef}
         style={{
-          position: 'absolute',
+          position: 'relative',
           top: 0,
           left: 0,
-          width: '550vh',
+          width: '200vh',
           height: '59vh',
           pointerEvents: 'none',
         }}
       >
-        <canvas ref={canvasRef} />
+        <canvas ref={canvasRef} className="canvas" />
       </div>
-      <button
-        style={{
-          cursor: 'pointer',
-          display: 'block',
-          textAlign: 'center',
-          marginBottom: '16px',
-          width: '10vh',
-          top: '10vh',
-          marginLeft: "100vh",
-          marginTop: "50vh",
-          position: 'relative',
-          zIndex: '1'
-        }}
-        onClick={() => handleClick()}
-      >
-        생성
-      </button>
-      <button className="btn-rst" onClick={() => resetWorld()}>
-        초기화
-      </button>
-      <br />
-      <button className="btn-rst" onClick={() => handlePusherClick()}>
-        push
-      </button>
+      <div className="controls">
+        <div className="crt-btn">
+          <Button variant="contained" style={{ marginRight: '2vh' }} onClick={() => handleClick()}>
+            생성
+          </Button>
+          <Button variant="contained" style={{ marginRight: '2vh' }} onClick={() => resetWorld()}>
+            초기화
+          </Button>
+          <Button variant="contained" style={{ marginRight: '2vh' }} onClick={() => handlePusherClick()}>
+            밀기
+          </Button>
+        </div>
+      </div>
       <br />
       <br />
       <br />
@@ -265,6 +306,16 @@ export default function Index() {
         밀대에는 0.1의 마찰력이 작용함.
       </div>
       <style jsx>{`
+        .btn-crt {
+          cursor: pointer;
+          display: block;
+          textAlign: center;
+          marginBottom: 16px;
+          width: 10vh;
+          marginLeft: 100vh;
+          position: absolute;
+          z-index: 1;
+        }
         .btn-rst {
           cursor: pointer;
           display: block;
@@ -274,7 +325,31 @@ export default function Index() {
           z-index: 1;
           top: 7vh;
         }
+        .controls {
+          position: absolute;
+          top: 75vh;
+          left: 60vh;
+          width: 100vh;
+          height: 10vh;
+          z-index: 1;
+        }
+        .canvas {
+          position: absolute;
+          top:-25vh;
+        }
+        @media (max-width: 600px) {
+          .canvas {
+            top: -25vh;
+          }
+          .controls {
+            top: 55vh;
+            left: 10vh;
+          }
+        }
+        .crt-btn {
+          margin-left: 10vh;
+        }
       `}</style>
-    </div>
+    </div >
   )
 }
