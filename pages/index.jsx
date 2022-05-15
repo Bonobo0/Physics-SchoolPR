@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import Matter from 'matter-js'
-import Button from '@mui/material/Button';
+import { Button, Slider, Checkbox, FormGroup, FormControlLabel } from '@mui/material'
 
 const STATIC_DENSITY = 9
 const PARTICLE_SIZE = 20
@@ -14,6 +14,8 @@ export default function Index() {
 
   const [someStateValue, setSomeStateValue] = useState(false)
   const [resetStateValue, setResetStateValue] = useState(false)
+  const [gravityStateValue, setGravityStateValue] = useState(false)
+  const [ballFrictionStateValue, setBallFrictionStateValue] = useState(true)
 
   const [pusherStateValue, setPusherStateValue] = useState(false)
   const [ballSpeedStateValue, setBallSpeedStateValue] = useState(false)
@@ -54,28 +56,34 @@ export default function Index() {
     })
     let pusherPostiton = { x: 0, y: 0 }
     let windowWidth = window.outerWidth;
+    let pusherWidth = 0
     if (windowWidth > 600) {
       pusherPostiton = {
         x: 100,
-        y: 535,
+        y: 530,
       }
     }
     else {
       pusherPostiton = {
-        x: 100,
-        y: 335,
+        x: 30,
+        y: 350,
       }
     };
 
-    const floor = Bodies.rectangle(0, 0, 0, STATIC_DENSITY, {
+    const floor = Bodies.rectangle(100, 0, 0, STATIC_DENSITY, {
       isStatic: true,
       render: {
         fillStyle: 'blue',
       },
     })
 
-
-    const pusher1 = Bodies.rectangle(0, 535, 175, 15, {
+    if (windowWidth > 600) {
+      pusherWidth = 175
+    }
+    else {
+      pusherWidth = 75
+    }
+    const pusher1 = Bodies.rectangle(pusherPostiton.x, pusherPostiton.y, pusherWidth, 15, {
       isStatic: true,
       friction: 0.1,
       frictionAir: 0.1,
@@ -88,7 +96,7 @@ export default function Index() {
     })
 
     World.add(engine.world, [floor, pusher1])
-    engine.world.gravity.y = 0;
+    engine.world.gravity.y = gravityStateValue;
     Runner.run(engine)
     Render.run(render)
     setContraints(boxRef.current.getBoundingClientRect())
@@ -138,18 +146,71 @@ export default function Index() {
     if (scene) {
       let circlePostiton = { x: 220, y: 0 }
       let windowWidth = window.outerWidth;
+      let friction = 0;
       if (windowWidth > 600) {
-        circlePostiton.y = 550
+        circlePostiton.y = 530
       }
       else {
         circlePostiton.y = 350
+        circlePostiton.x = 120
+      };
+      if (ballFrictionStateValue) {
+        if (ballFrictionStateValue != true) {
+          friction = ballFrictionStateValue;
+        }
+        else {
+          friction = 0.1;
+        }
       };
       Matter.World.add(
         scene.engine.world,
-        Matter.Bodies.circle(circlePostiton.x, circlePostiton.y, PARTICLE_SIZE, { mass: ballMassStateValue, friction: 0, frictionAir: 0, restitution: 0 }),
+        Matter.Bodies.circle(circlePostiton.x, circlePostiton.y, PARTICLE_SIZE, { mass: ballMassStateValue, friction: friction, frictionAir: friction, restitution: 0 }),
       )
     }
   }, [someStateValue])
+
+  useEffect(() => {
+    if (scene) {
+      if (gravityStateValue) {
+        scene.engine.world.gravity.y = 1;
+      }
+      else {
+        scene.engine.world.gravity.y = 0;
+      }
+    }
+  }, [gravityStateValue])
+
+  useEffect(() => {
+    if (scene) {
+      if (ballFrictionStateValue) {
+        let fValue = 0.1;
+        if (ballFrictionStateValue != true) {
+          fValue = ballFrictionStateValue;
+        }
+        for (let i = scene.engine.world.bodies.length - 1; i >= 0; i--) {
+          scene.engine.world.bodies.forEach((body) => {
+            if (body.label === 'Circle Body') {
+              body.friction = fValue;
+              body.friction = fValue;
+              console.log(body.friction)
+            }
+          })
+        }
+      }
+      else {
+        for (let i = scene.engine.world.bodies.length - 1; i >= 0; i--) {
+          scene.engine.world.bodies.forEach((body) => {
+            if (body.label === 'Circle Body') {
+              body.friction = 0;
+              body.frictionAir = 0;
+              body.restitution = 0;
+              console.log(body.friction)
+            }
+          })
+        }
+      }
+    }
+  }, [ballFrictionStateValue])
 
   useEffect(() => {
     // Remove ALL "ball" everytime `resetStateValue` changes
@@ -158,13 +219,13 @@ export default function Index() {
     if (windowWidth > 600) {
       pusherPostiton = {
         x: 100,
-        y: 535,
+        y: 530,
       }
     }
     else {
       pusherPostiton = {
-        x: 100,
-        y: 335,
+        x: 30,
+        y: 350,
       }
     }
     if (scene) {
@@ -179,7 +240,6 @@ export default function Index() {
       for (let i = scene.engine.world.bodies.length - 1; i >= 0; i--) {
         scene.engine.world.bodies.forEach((body) => {
           if (body.label === 'Circle Body') {
-            console.log(body.mass)
             Matter.World.remove(scene.engine.world, body)
           }
         }
@@ -195,13 +255,13 @@ export default function Index() {
     if (windowWidth > 600) {
       pusherPostiton = {
         x: 100,
-        y: 535,
+        y: 530,
       }
     }
     else {
       pusherPostiton = {
-        x: 100,
-        y: 320,
+        x: 30,
+        y: 350,
       }
     }
 
@@ -231,10 +291,13 @@ export default function Index() {
               if (body.label === 'Circle Body') {
                 setBallSpeedStateValue(body.velocity.x);
                 setBallMassStateValue(body.mass);
+                if (body.velocity.x < 0.0000001) {
+                  setBallSpeedStateValue(0);
+                }
               }
               else if (body.label === 'Rectangle Body') {
                 setPusherSpeedStateValue(body.velocity.x);
-                setPusherMassStateValue(body.mass);
+                body.mass = pusherMassStateValue;
                 if (body.velocity.x < 0.0000001) {
                   setPusherSpeedStateValue(0);
                 }
@@ -243,10 +306,9 @@ export default function Index() {
             )
           };
         }
-        , 0.001)
+        , 1)
     }
   }, [scene])
-
 
   return (
     <div
@@ -284,24 +346,38 @@ export default function Index() {
             밀기
           </Button>
         </div>
+        <br />
+        <div className="slider-container">
+          밀대 힘
+          <Slider aria-label="Custom marks" max={0.1428} min={0} step={0.000000001} defaultValue={0.1} valueLabelDisplay="auto" onChange={(e, val) => setPusherForceStateValue(val)} />
+          밀대 질량
+          <Slider aria-label="Custom marks" max={100} min={0} step={0.1} defaultValue={1} valueLabelDisplay="auto" onChange={(e, val) => setPusherMassStateValue(val)} />
+          공 질량
+          <Slider aria-label="Custom marks" max={10} min={0} step={0.000000001} defaultValue={0.1} valueLabelDisplay="auto" onChange={(e, val) => setBallMassStateValue(val)} />
+          공 마찰력
+          <Slider aria-label="Custom marks" max={1} min={0} step={0.000000001} defaultValue={0.1} valueLabelDisplay="auto" onChange={(e, val) => setBallFrictionStateValue(val)} />
+        </div>
+        <div className="checkbox-container">
+          <FormGroup>
+            <FormControlLabel control={<Checkbox onChange={(e) => setGravityStateValue(!gravityStateValue)} />} label="중력" />
+          </FormGroup>
+        </div>
       </div>
       <br />
       <br />
       <br />
-      <div>
+      <div className="text-dashboard">
         Dashboard
         <br />
         공 속도: {ballSpeedStateValue}
         <br />
-        질량: {ballMassStateValue}
+        공 질량: {ballMassStateValue}
         <br />
         밀대 속도: {pusherSpeedStateValue}
         <br />
         밀대가 미는 힘: {pusherForceStateValue * pusherMassStateValue}
         <br />
-        질량: {pusherMassStateValue}
-        <br />
-        공에는 마찰력이 작용하지 않음. 중력이 적용되지 않음.
+        밀대 질량: {pusherMassStateValue}
         <br />
         밀대에는 0.1의 마찰력이 작용함.
       </div>
@@ -327,15 +403,27 @@ export default function Index() {
         }
         .controls {
           position: absolute;
-          top: 75vh;
-          left: 60vh;
+          top: 65vh;
+          left: 55vh;
           width: 100vh;
           height: 10vh;
           z-index: 1;
         }
         .canvas {
           position: absolute;
-          top:-25vh;
+          top: -15vh;
+        }
+        .slider-container {
+          width: 30%;
+        }
+        .checkbox-container {
+          width: 30%;
+        }
+        .text-dashboard {
+          position: absolute;
+          width: auto;
+          height: 10vh;
+          z-index: 2;
         }
         @media (max-width: 600px) {
           .canvas {
@@ -345,11 +433,11 @@ export default function Index() {
             top: 55vh;
             left: 10vh;
           }
+          .text-dashboard {
+            top: 110vh;
+          }
         }
-        .crt-btn {
-          margin-left: 10vh;
-        }
-      `}</style>
+        `}</style>
     </div >
   )
 }
