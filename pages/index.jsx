@@ -355,7 +355,7 @@ export default function Index() {
           공 질량
           <Slider aria-label="Custom marks" max={10} min={0} step={0.000000001} defaultValue={0.1} valueLabelDisplay="auto" onChange={(e, val) => setBallMassStateValue(val)} />
           공 마찰력
-          <Slider aria-label="Custom marks" max={1} min={0} step={0.000000001} defaultValue={0.1} valueLabelDisplay="auto" onChange={(e, val) => setBallFrictionStateValue(val)} />
+          <Slider aria-label="Custom marks" max={1} min={0} step={0.000000001} defaultValue={0} valueLabelDisplay="auto" onChange={(e, val) => setBallFrictionStateValue(val)} />
         </div>
         <div className="checkbox-container">
           <FormGroup>
@@ -372,6 +372,8 @@ export default function Index() {
         공 속도: {ballSpeedStateValue}
         <br />
         공 질량: {ballMassStateValue}
+        <br />
+        공 마찰력: {ballFrictionStateValue}
         <br />
         밀대 속도: {pusherSpeedStateValue}
         <br />
