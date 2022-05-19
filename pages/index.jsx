@@ -270,7 +270,7 @@ export default function Index() {
       if (pusherStateValue) {
         pusher.isStatic = false;
         Matter.Body.applyForce(pusher, { x: pusher.position.x, y: pusher.position.y }, {
-          x: pusherForceStateValue * pusher.mass,
+          x: pusherForceStateValue * pusherMassStateValue,
           y: 0,
         })
       } else {
@@ -351,7 +351,7 @@ export default function Index() {
           밀대 힘
           <Slider aria-label="Custom marks" max={0.1428} min={0} step={0.000000001} defaultValue={0.1} valueLabelDisplay="auto" onChange={(e, val) => setPusherForceStateValue(val)} />
           밀대 질량
-          <Slider aria-label="Custom marks" max={100} min={0} step={0.1} defaultValue={1} valueLabelDisplay="auto" onChange={(e, val) => setPusherMassStateValue(val)} />
+          <Slider aria-label="Custom marks" max={100} min={0} step={0.1} defaultValue={1} valueLabelDisplay="auto" onChange={(e, val) => setPusherForceStateValue(val)} />
           공 질량
           <Slider aria-label="Custom marks" max={10} min={0} step={0.000000001} defaultValue={0.1} valueLabelDisplay="auto" onChange={(e, val) => setBallMassStateValue(val)} />
           공 마찰력
