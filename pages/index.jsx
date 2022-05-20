@@ -1,6 +1,29 @@
 import React, { useEffect, useState, useRef } from 'react'
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import Matter from 'matter-js'
 import { Button, Slider, Checkbox, FormGroup, FormControlLabel } from '@mui/material'
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import { Line } from 'react-chartjs-2';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const STATIC_DENSITY = 9
 const PARTICLE_SIZE = 20
@@ -8,6 +31,8 @@ const PARTICLE_SIZE = 20
 export default function Index() {
   const boxRef = useRef(null)
   const canvasRef = useRef(null)
+
+  const [loading, setLoading] = useState(true)
 
   const [constraints, setContraints] = useState()
   const [scene, setScene] = useState()
@@ -24,6 +49,25 @@ export default function Index() {
   const [pusherMassStateValue, setPusherMassStateValue] = useState(1)
   const [pusherForceStateValue, setPusherForceStateValue] = useState(0.1)
 
+  const NotMobileSupprot = () => {
+    toast.info("해당 웹 사이트는 단순 학교 발표를 위한 프로젝트이며, 모바일 버전에는 완벽하게 최적화 되어있지 않습니다.", {
+      position: toast.POSITION.TOP_CENTER,
+      autoClose: 5000,
+    });
+  }
+  const Notification = () => {
+    toast.info("발표용 프로젝트로써, 실제 Production 급의 디자인이나 완성도를 보장하지 않습니다.", {
+      position: toast.POSITION.TOP_CENTER,
+      autoClose: 5000,
+    });
+  }
+
+  const MainNotification = () => {
+    NotMobileSupprot();
+    Notification();
+    return null;
+  };
+
   const resetWorld = () => {
     setResetStateValue(!resetStateValue)
   }
@@ -36,6 +80,47 @@ export default function Index() {
     setPusherStateValue(!pusherStateValue)
   }
 
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      title: {
+        display: true,
+        text: 'Chart Dashboard',
+      },
+    },
+  };
+  const labels = ['BallMass', 'BallSpeed', 'PusherMass', 'PusherForce'];
+  const data = {
+    labels,
+    datasets: [
+      {
+        label: '물리 시뮬레이터',
+        data: [
+          ballMassStateValue,
+          ballSpeedStateValue,
+          pusherMassStateValue,
+          pusherForceStateValue * pusherMassStateValue,
+        ],
+        borderColor: 'rgb(255, 99, 132)',
+        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+      },
+    ]
+  };
+
+  // Mobile Notification
+  useEffect(() => {
+    if (loading) {
+      if (window.innerWidth < 768) {
+        NotMobileSupprot()
+        toast.clearWaitingQueue();
+      }
+      setLoading(false)
+    }
+  }, [])
+  // Config Matter.js
   useEffect(() => {
     let Engine = Matter.Engine
     let Render = Matter.Render
@@ -110,7 +195,7 @@ export default function Index() {
       render.canvas.height = window.innerHeight;
     });
   }, [])
-
+  // Config Floor 
   useEffect(() => {
     if (constraints) {
       let { width, height } = constraints
@@ -140,7 +225,7 @@ export default function Index() {
       ])
     }
   }, [scene, constraints])
-
+  // Create Ball
   useEffect(() => {
     // Add a new "ball" everytime `someStateValue` changes
     if (scene) {
@@ -159,7 +244,7 @@ export default function Index() {
           friction = ballFrictionStateValue;
         }
         else {
-          friction = 0.1;
+          friction = 0;
         }
       };
       Matter.World.add(
@@ -168,7 +253,7 @@ export default function Index() {
       )
     }
   }, [someStateValue])
-
+  // Config Gravity
   useEffect(() => {
     if (scene) {
       if (gravityStateValue) {
@@ -179,7 +264,7 @@ export default function Index() {
       }
     }
   }, [gravityStateValue])
-
+  // Config Friction
   useEffect(() => {
     if (scene) {
       if (ballFrictionStateValue) {
@@ -191,8 +276,7 @@ export default function Index() {
           scene.engine.world.bodies.forEach((body) => {
             if (body.label === 'Circle Body') {
               body.friction = fValue;
-              body.friction = fValue;
-              console.log(body.friction)
+              body.frictionAir = fValue;
             }
           })
         }
@@ -204,16 +288,14 @@ export default function Index() {
               body.friction = 0;
               body.frictionAir = 0;
               body.restitution = 0;
-              console.log(body.friction)
             }
           })
         }
       }
     }
   }, [ballFrictionStateValue])
-
+  // Reset World
   useEffect(() => {
-    // Remove ALL "ball" everytime `resetStateValue` changes
     let pusherPostiton = {}
     let windowWidth = window.outerWidth
     if (windowWidth > 600) {
@@ -247,7 +329,7 @@ export default function Index() {
       }
     }
   }, [resetStateValue])
-
+  // Apply Force to Pusher
   useEffect(() => {
     // Run pusher everytime `pusherStateValue` changes
     let windowWidth = window.outerWidth
@@ -280,9 +362,8 @@ export default function Index() {
       }
     }
   }, [pusherStateValue])
-
+  // Get Objects' properties
   useEffect(() => {
-    // Get object' speed 
     if (scene) {
       setInterval(
         () => {
@@ -311,15 +392,11 @@ export default function Index() {
   }, [scene])
 
   return (
-    <div
-      style={{
-        position: 'relative',
-        border: '1px solid white',
-        padding: '8px',
-      }}
-    >
-      <div style={{ textAlign: 'center' }}>물리 시뮬레이터</div>
-
+    <div>
+      <div className="title">물리 시뮬레이터
+        <Button variant="contained" style={{ marginLeft: '2vh', marginTop: '-0.5vh' }} onClick={MainNotification}>
+          안내
+        </Button></div>
       <div
         className="canvas"
         ref={boxRef}
@@ -348,14 +425,14 @@ export default function Index() {
         </div>
         <br />
         <div className="slider-container">
-          밀대 힘
-          <Slider aria-label="Custom marks" max={0.1428} min={0} step={0.000000001} defaultValue={0.1} valueLabelDisplay="auto" onChange={(e, val) => setPusherForceStateValue(val)} />
+          밀대 질량 / 밀대 힘
+          <Slider aria-label="Custom marks" max={0.5} min={0} step={0.000000001} defaultValue={0.1} valueLabelDisplay="auto" onChange={(e, val) => setPusherForceStateValue(val)} />
           밀대 질량
-          <Slider aria-label="Custom marks" max={100} min={0} step={0.1} defaultValue={1} valueLabelDisplay="auto" onChange={(e, val) => setPusherMassStateValue(val)} />
+          <Slider aria-label="Custom marks" max={10} min={0} step={0.01} defaultValue={1} valueLabelDisplay="auto" onChange={(e, val) => setPusherMassStateValue(val)} />
           공 질량
-          <Slider aria-label="Custom marks" max={10} min={0} step={0.000000001} defaultValue={0.1} valueLabelDisplay="auto" onChange={(e, val) => setBallMassStateValue(val)} />
+          <Slider aria-label="Custom marks" max={100} min={0} step={0.01} defaultValue={10} valueLabelDisplay="auto" onChange={(e, val) => setBallMassStateValue(val)} />
           공 마찰력
-          <Slider aria-label="Custom marks" max={1} min={0} step={0.000000001} defaultValue={0} valueLabelDisplay="auto" onChange={(e, val) => setBallFrictionStateValue(val)} />
+          <Slider aria-label="Custom marks" max={10} min={0} step={0.01} defaultValue={0} valueLabelDisplay="auto" onChange={(e, val) => setBallFrictionStateValue(val)} />
         </div>
         <div className="checkbox-container">
           <FormGroup>
@@ -366,7 +443,10 @@ export default function Index() {
       <br />
       <br />
       <br />
-      <div className="text-dashboard">
+      <div className="dashboard">
+        <div className="chart">
+          <Line options={chartOptions} data={data} />
+        </div>
         Dashboard
         <br />
         공 속도: {ballSpeedStateValue}
@@ -384,6 +464,7 @@ export default function Index() {
         밀대에는 0.1의 마찰력이 작용함.
       </div>
       <style jsx>{`
+
         .btn-crt {
           cursor: pointer;
           display: block;
@@ -405,8 +486,8 @@ export default function Index() {
         }
         .controls {
           position: absolute;
-          top: 65vh;
-          left: 55vh;
+          top: 52vh;
+          left: 5vh;
           width: 100vh;
           height: 10vh;
           z-index: 1;
@@ -421,11 +502,13 @@ export default function Index() {
         .checkbox-container {
           width: 30%;
         }
-        .text-dashboard {
+        .dashboard {
           position: absolute;
           width: auto;
           height: 10vh;
-          z-index: 2;
+          left: 58vh;
+          z-index: 1;
+          margin-top: -18vh;
         }
         @media (max-width: 600px) {
           .canvas {
@@ -435,9 +518,20 @@ export default function Index() {
             top: 55vh;
             left: 10vh;
           }
-          .text-dashboard {
+          .dashboard {
             top: 110vh;
+            margin-top: 5vh;
           }
+        }
+        .title {
+          font-size: 1.5em;
+          text-align: center;
+        }
+        .chart {
+          width: 100vh;
+          position: absolute;
+          top: -3vh;
+          left: 42vh;
         }
         `}</style>
     </div >
