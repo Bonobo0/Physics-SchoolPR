@@ -34,6 +34,7 @@ export default function Index() {
   const canvasRef = useRef(null)
 
   const [loading, setLoading] = useState(true)
+  const [MacBookOptimized, setMacBookOptimized] = useState(null)
 
   const [constraints, setContraints] = useState()
   const [scene, setScene] = useState()
@@ -81,6 +82,11 @@ export default function Index() {
     setPusherStateValue(!pusherStateValue)
   }
 
+  const MacBookOptimization = () => {
+    setMacBookOptimized(!MacBookOptimized)
+  }
+  
+  
   const chartOptions = {
     responsive: true,
     plugins: {
@@ -110,6 +116,24 @@ export default function Index() {
       },
     ]
   };
+  
+  // MacBook Optimization
+
+  useEffect(() => {
+    if (localStorage.getItem('MacBookOptimized') == 'true') {
+      setMacBookOptimized(true)
+    }
+    else if (localStorage.getItem('MacBookOptimized') == 'false') {
+      setMacBookOptimized(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (MacBookOptimized != null) {
+    localStorage.setItem('MacBookOptimized', MacBookOptimized)
+    }
+  }, [MacBookOptimized])
+
 
   // Mobile Notification
   useEffect(() => {
@@ -123,14 +147,15 @@ export default function Index() {
   }, [])
   // Config Matter.js
   useEffect(() => {
+    // Sleep for 0.5 sec
+    setTimeout(console.log("Loading Settings..."), 500);
+    const MO = localStorage.getItem('MacBookOptimized') 
     let Engine = Matter.Engine
     let Render = Matter.Render
     let Runner = Matter.Runner
     let World = Matter.World
     let Bodies = Matter.Bodies
-
     let engine = Engine.create({})
-
     let render = Render.create({
       element: boxRef.current,
       engine: engine,
@@ -143,7 +168,14 @@ export default function Index() {
     let pusherPostiton = { x: 0, y: 0 }
     let windowWidth = window.outerWidth;
     let pusherWidth = 0
-    if (windowWidth > 600) {
+    console.log(`MacBookOptimized: ${MO} `)
+    if (MO == "true"){
+      pusherPostiton = {
+        x: 100,
+        y: 380,
+      }
+    }
+    else if (windowWidth > 600) {
       pusherPostiton = {
         x: 100,
         y: 530,
@@ -155,7 +187,6 @@ export default function Index() {
         y: 350,
       }
     };
-
     const floor = Bodies.rectangle(100, 0, 0, STATIC_DENSITY, {
       isStatic: true,
       render: {
@@ -230,10 +261,17 @@ export default function Index() {
   useEffect(() => {
     // Add a new "ball" everytime `someStateValue` changes
     if (scene) {
+      const MO = localStorage.getItem('MacBookOptimized')
       let circlePostiton = { x: 220, y: 0 }
       let windowWidth = window.outerWidth;
       let friction = 0;
-      if (windowWidth > 600) {
+      if (MO) {
+        circlePostiton = {
+          x: 250,
+          y: 380,
+        }
+      }
+      else if (windowWidth > 600) {
         circlePostiton.y = 530
       }
       else {
@@ -297,9 +335,16 @@ export default function Index() {
   }, [ballFrictionStateValue])
   // Reset World
   useEffect(() => {
+    const MO = localStorage.getItem('MacBookOptimized') 
     let pusherPostiton = {}
     let windowWidth = window.outerWidth
-    if (windowWidth > 600) {
+    if (MO) {
+      pusherPostiton = {
+        x: 100,
+        y: 380,
+      }
+    }
+    else if (windowWidth > 600) {
       pusherPostiton = {
         x: 100,
         y: 530,
@@ -333,9 +378,16 @@ export default function Index() {
   // Apply Force to Pusher
   useEffect(() => {
     // Run pusher everytime `pusherStateValue` changes
+    const MO = localStorage.getItem('MacBookOptimized') 
     let windowWidth = window.outerWidth
     let pusherPostiton = {}
-    if (windowWidth > 600) {
+    if (MO) {
+      pusherPostiton = {
+        x: 100,
+        y: 380,
+      }
+    }
+    else if (windowWidth > 600) {
       pusherPostiton = {
         x: 100,
         y: 530,
@@ -398,6 +450,9 @@ export default function Index() {
         <Button variant="contained" style={{ marginLeft: '2vh', marginTop: '-0.5vh' }} onClick={MainNotification}>
           안내
         </Button></div>
+        <Button variant='contained' onClick={MacBookOptimization}>
+          맥북 최적화 {MacBookOptimized ? '켜짐' : '꺼짐' } (새로고침 시 적용.)
+        </Button>
       <div
         className="canvas"
         ref={boxRef}
@@ -507,7 +562,7 @@ export default function Index() {
           position: absolute;
           width: auto;
           height: 10vh;
-          left: 58vh;
+          left: 42vh;
           z-index: 1;
           margin-top: -18vh;
         }
@@ -532,7 +587,7 @@ export default function Index() {
           width: 100vh;
           position: absolute;
           top: -3vh;
-          left: 42vh;
+          left: 32vh;
         }
         `}</style>
     </div >
