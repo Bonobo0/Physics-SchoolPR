@@ -483,13 +483,13 @@ export default function Index() {
         <br />
         <div className="slider-container">
           밀대 질량 / 밀대 힘
-          <Slider aria-label="Custom marks" max={0.5} min={0} step={0.000000001} defaultValue={0.1} valueLabelDisplay="auto" onChange={(e, val) => setPusherForceStateValue(val)} />
+          <Slider aria-label="Custom marks" max={0.16} min={0} step={0.000000001} defaultValue={0.1} valueLabelDisplay="auto" onChange={(e, val) => setPusherForceStateValue(val)} />
           밀대 질량
-          <Slider aria-label="Custom marks" max={10} min={0} step={0.01} defaultValue={1} valueLabelDisplay="auto" onChange={(e, val) => setPusherMassStateValue(val)} />
+          <Slider aria-label="Custom marks" max={1.75} min={0} step={0.001} defaultValue={1} valueLabelDisplay="auto" onChange={(e, val) => setPusherMassStateValue(val)} />
           공 질량
-          <Slider aria-label="Custom marks" max={100} min={0} step={0.01} defaultValue={10} valueLabelDisplay="auto" onChange={(e, val) => setBallMassStateValue(val)} />
+          <Slider aria-label="Custom marks" max={100} min={0.0001} step={0.01} defaultValue={10} valueLabelDisplay="auto" onChange={(e, val) => setBallMassStateValue(val)} />
           공 마찰력
-          <Slider aria-label="Custom marks" max={10} min={0} step={0.01} defaultValue={0} valueLabelDisplay="auto" onChange={(e, val) => setBallFrictionStateValue(val)} />
+          <Slider aria-label="Custom marks" max={0.3} min={0} step={0.001} defaultValue={0} valueLabelDisplay="auto" onChange={(e, val) => setBallFrictionStateValue(val)} />
         </div>
         <div className="checkbox-container">
           <FormGroup>
