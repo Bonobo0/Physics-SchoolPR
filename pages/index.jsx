@@ -265,7 +265,7 @@ export default function Index() {
       let circlePostiton = { x: 220, y: 0 }
       let windowWidth = window.outerWidth;
       let friction = 0;
-      if (MO) {
+      if (MO == 'true') {
         circlePostiton = {
           x: 250,
           y: 380,
@@ -338,7 +338,8 @@ export default function Index() {
     const MO = localStorage.getItem('MacBookOptimized') 
     let pusherPostiton = {}
     let windowWidth = window.outerWidth
-    if (MO) {
+    
+    if (MO == 'true') {
       pusherPostiton = {
         x: 100,
         y: 380,
@@ -381,7 +382,7 @@ export default function Index() {
     const MO = localStorage.getItem('MacBookOptimized') 
     let windowWidth = window.outerWidth
     let pusherPostiton = {}
-    if (MO) {
+    if (MO == 'true') {
       pusherPostiton = {
         x: 100,
         y: 380,
@@ -542,7 +543,7 @@ export default function Index() {
         }
         .controls {
           position: absolute;
-          top: 52vh;
+          top: 57vh;
           left: 5vh;
           width: 100vh;
           height: 10vh;
